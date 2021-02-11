@@ -8,82 +8,199 @@
 import UIKit
 
 class ToDoListTableViewController: UITableViewController {
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-
-        // Uncomment the following line to preserve selection between presentations
-        // self.clearsSelectionOnViewWillAppear = false
-
-        // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
-        // self.navigationItem.rightBarButtonItem = self.editButtonItem
+  
+  let model = Model()
+  
+  let plusButton = UIBarButtonItem(image: plusImage, style: .plain, target: self, action: nil)
+  let editButton = UIBarButtonItem(image: editOff, style: .plain, target: self, action: nil)
+  let arrowButton = UIBarButtonItem(image: arrowUp, style: .plain, target: self, action: nil)
+  
+  static let plusImage = UIImage(systemName: "plus")
+  static let editOn = UIImage(systemName: "pencil.slash")
+  static let editOff = UIImage(systemName: "pencil")
+  static let arrowUp = UIImage(systemName: "arrow.up")
+  static let arrowDown = UIImage(systemName: "arrow.down")
+  
+  var popUpAction = UIAlertController()
+  
+  override func viewDidLoad() {
+    super.viewDidLoad()
+    
+    self.navigationItem.rightBarButtonItems = [plusButton, editButton, arrowButton]
+    self.navigationItem.title = "Tasks"
+    
+    plusButton.target = self
+    plusButton.action = #selector(addTaskButtonAction(_:))
+    editButton.target = self
+    editButton.action = #selector(editButtonAction(_:))
+    arrowButton.target = self
+    arrowButton.action = #selector(sortingTasksButtonAction(_:))
+    
+    tableView.translatesAutoresizingMaskIntoConstraints = false
+    tableView.separatorColor = .gray
+    
+    tableView.register(CustomToDoListCell.self, forCellReuseIdentifier: "contactCell")
+    
+  }
+  
+  // MARK: - Table View Data Source
+  
+  override func numberOfSections(in tableView: UITableView) -> Int {
+    // #warning Incomplete implementation, return the number of sections
+    return 1
+  }
+  
+  override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    // #warning Incomplete implementation, return the number of rows
+    return model.toDoItems.count
+  }
+  
+  override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    let cell = tableView.dequeueReusableCell(withIdentifier: "contactCell", for: indexPath) as! CustomToDoListCell
+    // Configure the cell...
+    cell.itemLabel.text = model.toDoItems[indexPath.row].string
+    let currentItem = model.toDoItems[indexPath.row]
+    cell.itemLabel.text = currentItem.string
+    cell.accessoryType = currentItem.completed ? .checkmark : .none
+    return cell
+  }
+  
+  override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+    tableView.deselectRow(at: indexPath, animated: true)
+    if model.changeState(at: indexPath.row) == true {
+      tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
+      tableView.cellForRow(at: indexPath)?.tintColor = .systemGreen
+    } else {
+      tableView.cellForRow(at: indexPath)?.accessoryType = .none
+      tableView.cellForRow(at: indexPath)?.tintColor = .none
     }
-
-    // MARK: - Table view data source
-
-    override func numberOfSections(in tableView: UITableView) -> Int {
-        // #warning Incomplete implementation, return the number of sections
-        return 0
+  }
+  
+  // Override to support conditional editing of the table view.
+  override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+    // Return false if you do not want the specified item to be editable.
+    return true
+  }
+  
+  // Override to support editing the table view.
+  override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+    if editingStyle == UITableViewCell.EditingStyle.delete {
+      // Delete the row from the data source
+      model.toDoItems.remove(at: indexPath.row)
+      tableView.deleteRows(at: [indexPath], with: UITableView.RowAnimation.automatic)
+    } // else if editingStyle == .insert {
+    // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
+    // }
+  }
+  
+  // Override to support rearranging the table view.
+  override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
+    model.moveItem(fromIndex: fromIndexPath.row, toIndex: to.row)
+    tableView.reloadData()
+  }
+  
+  override func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+      let editAction = UIContextualAction(style: .normal, title: "Edit") { [weak self] (action, view, completionHandler) in
+          self?.editCellContent(indexPath: indexPath)
+                                          completionHandler(true)
+      }
+      editAction.backgroundColor = .systemBlue
+      return UISwipeActionsConfiguration(actions: [editAction])
+  }
+  
+  func editCellContent(indexPath: IndexPath) {
+    let cell = tableView(tableView, cellForRowAt: indexPath) as! CustomToDoListCell
+    popUpAction = UIAlertController(title: "Edit your task", message: nil, preferredStyle: .alert)
+    popUpAction.addTextField(configurationHandler: { (textField) -> Void in
+      textField.addTarget(self, action: #selector(self.alertTextFieldDidChange(_:)), for: .editingChanged)
+      textField.text = cell.itemLabel.text
+    })
+    let cancelPopUpAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+    let editPopUpAction = UIAlertAction(title: "Submit", style: .default) { (createAlert) in
+      guard let textFields = self.popUpAction.textFields, textFields.count > 0 else{
+        return
+      }
+      guard let textValue = self.popUpAction.textFields?[0].text else {
+        return
+      }
+      
+      self.model.updateItem(at: indexPath.row, with: textValue)
+      self.tableView.reloadData()
     }
-
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        // #warning Incomplete implementation, return the number of rows
-        return 0
+    popUpAction.addAction(cancelPopUpAction)
+    popUpAction.addAction(editPopUpAction)
+    present(popUpAction, animated: true, completion: nil)
+  }
+  
+  // MARK: - Button Actions
+  
+  @objc func alertTextFieldDidChange(_ sender: UITextField) {
+    guard let senderText = sender.text, popUpAction.actions.indices.contains(1) else {
+      return
     }
-
-    /*
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "reuseIdentifier", for: indexPath)
-
-        // Configure the cell...
-
-        return cell
+    let action = popUpAction.actions[1]
+    action.isEnabled = senderText.count > 0
+  }
+  
+  @objc func addTaskButtonAction(_ sender: Any) {
+    popUpAction = UIAlertController(title: "Add a new note", message: nil, preferredStyle: .alert)
+    popUpAction.addTextField { (textField: UITextField) in
+      textField.placeholder = "Put your note here"
+      textField.addTarget(self, action: #selector(self.alertTextFieldDidChange(_:)), for: .editingChanged)
     }
-    */
-
-    /*
-    // Override to support conditional editing of the table view.
-    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
-        // Return false if you do not want the specified item to be editable.
-        return true
+    let createPopUpAction = UIAlertAction(title: "Add", style: .default) { (createAlert) in
+      // add new task
+      guard let unwrTextFieldValue = self.popUpAction.textFields?[0].text else {
+        return
+      }
+      
+      self.model.addItem(itemName: unwrTextFieldValue)
+      self.model.sortByTitle()
+      self.tableView.reloadData()
     }
-    */
+    let cancelAlertAction = UIAlertAction(title: "Cancel", style: .cancel, handler: nil)
+    popUpAction.addAction(cancelAlertAction)
+    popUpAction.addAction(createPopUpAction)
+    present(popUpAction, animated: true, completion: nil)
+    createPopUpAction.isEnabled = false
+  }
+  
+  @objc func editButtonAction(_ sender: Any) {
+    tableView.setEditing(!tableView.isEditing, animated: true)
+    model.editButtonClicked = !model.editButtonClicked
+    editButton.image = model.editButtonClicked ? ToDoListTableViewController.editOn : ToDoListTableViewController.editOff
+  }
+  
+  @objc func sortingTasksButtonAction(_ sender: Any) {
+    model.sortedAscending = !model.sortedAscending
+    arrowButton.image = model.sortedAscending ? ToDoListTableViewController.arrowUp : ToDoListTableViewController.arrowDown
+    model.sortByTitle()
+    tableView.reloadData()
+  }
+  
+}
 
-    /*
-    // Override to support editing the table view.
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
-        if editingStyle == .delete {
-            // Delete the row from the data source
-            tableView.deleteRows(at: [indexPath], with: .fade)
-        } else if editingStyle == .insert {
-            // Create a new instance of the appropriate class, insert it into the array, and add a new row to the table view
-        }    
+// MARK: - Cell Protocol Stubs
+
+extension ToDoListTableViewController: CustomToDoListCellDelegate {
+  
+  func editCell(cell: CustomToDoListCell) {
+    let indexPath = tableView.indexPath(for: cell)
+    guard let unwrIndexPath = indexPath else {
+      return
     }
-    */
-
-    /*
-    // Override to support rearranging the table view.
-    override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
-
+    self.editCellContent(indexPath: unwrIndexPath)
+    print("Item edited")
+  }
+  
+  func deleteCell(cell: CustomToDoListCell) {
+    let indexPath = tableView.indexPath(for: cell)
+    guard let unwrIndexPath = indexPath else {
+      return
     }
-    */
-
-    /*
-    // Override to support conditional rearranging of the table view.
-    override func tableView(_ tableView: UITableView, canMoveRowAt indexPath: IndexPath) -> Bool {
-        // Return false if you do not want the item to be re-orderable.
-        return true
-    }
-    */
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destination.
-        // Pass the selected object to the new view controller.
-    }
-    */
-
+    model.removeItem(at: unwrIndexPath.row)
+    print("Item deleted")
+    tableView.reloadData()
+  }
+  
 }
