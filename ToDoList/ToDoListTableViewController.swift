@@ -21,6 +21,7 @@ class ToDoListTableViewController: UIViewController, UITableViewDataSource, UITa
   static let editOff = UIImage(systemName: "pencil")
   static let arrowUp = UIImage(systemName: "arrow.up")
   static let arrowDown = UIImage(systemName: "arrow.down")
+  public let arrayOfImages = ["bellsprout","bullbasaur","caterpie","charmander","dratini","eevee","jigglypuff","mankey","meowth","mew","pidgey","pikachu-2","psyduck","rattata","snorlax","squirtle","venonat","weedle","zubat"]
   
   var popUpAction = UIAlertController()
   
@@ -70,6 +71,7 @@ class ToDoListTableViewController: UIViewController, UITableViewDataSource, UITa
     cell.itemLabel.text = model.toDoItems[indexPath.row].string
     let currentItem = model.toDoItems[indexPath.row]
     cell.itemLabel.text = currentItem.string
+    cell.imgView.image = UIImage(named: arrayOfImages[indexPath.row])
     cell.accessoryType = currentItem.completed ? .checkmark : .none
     return cell
   }

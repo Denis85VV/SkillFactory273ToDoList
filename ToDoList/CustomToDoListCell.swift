@@ -40,12 +40,20 @@ class CustomToDoListCell: UITableViewCell {
     return button
   }()
   
+  let imgView: UIImageView = {
+    let image = UIImageView()
+    image.image = UIImage(named: "bellsprout")
+    image.translatesAutoresizingMaskIntoConstraints = false
+    return image
+  }()
+  
   override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
     super.init(style: style, reuseIdentifier: reuseIdentifier)
     
     contentView.addSubview(editItem)
     contentView.addSubview(itemLabel)
     contentView.addSubview(deleteItem)
+    contentView.addSubview(imgView)
     
     editItem.addTarget(self, action: #selector(editCell(_:)), for: .touchUpInside)
     deleteItem.addTarget(self, action: #selector(deleteCell(_:)), for: .touchUpInside)
@@ -57,7 +65,7 @@ class CustomToDoListCell: UITableViewCell {
     editItem.trailingAnchor.constraint(equalTo:self.contentView.trailingAnchor, constant:-55).isActive = true
     editItem.centerYAnchor.constraint(equalTo:self.contentView.centerYAnchor).isActive = true
   
-    itemLabel.leftAnchor.constraint(equalTo:self.contentView.leftAnchor, constant:20).isActive = true
+    itemLabel.leftAnchor.constraint(equalTo:self.contentView.leftAnchor, constant:70).isActive = true
     itemLabel.leadingAnchor.constraint(equalTo:self.contentView.leadingAnchor).isActive = true
     itemLabel.trailingAnchor.constraint(equalTo:editItem.trailingAnchor).isActive = true
     itemLabel.centerYAnchor.constraint(equalTo:self.contentView.centerYAnchor).isActive = true
@@ -66,6 +74,10 @@ class CustomToDoListCell: UITableViewCell {
     deleteItem.heightAnchor.constraint(equalToConstant:30).isActive = true
     deleteItem.trailingAnchor.constraint(equalTo:self.contentView.trailingAnchor, constant:-15).isActive = true
     deleteItem.centerYAnchor.constraint(equalTo:self.contentView.centerYAnchor).isActive = true
+    
+    imgView.widthAnchor.constraint(equalToConstant:40).isActive = true
+    imgView.heightAnchor.constraint(equalToConstant:40).isActive = true
+    imgView.leftAnchor.constraint(equalTo:self.contentView.leftAnchor, constant:20).isActive = true
 
   }
   // MARK: - Button Actions in Cell
