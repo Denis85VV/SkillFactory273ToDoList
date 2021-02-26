@@ -8,8 +8,8 @@
 import UIKit
 
 protocol CustomToDoListCellDelegate {
-    func editCell(cell: CustomToDoListCell)
-    func deleteCell(cell: CustomToDoListCell)
+    func editCellFunc(cell: CustomToDoListCell)
+    func deleteCellFunc(cell: CustomToDoListCell)
 }
 
 class CustomToDoListCell: UITableViewCell {
@@ -47,8 +47,8 @@ class CustomToDoListCell: UITableViewCell {
     contentView.addSubview(itemLabel)
     contentView.addSubview(deleteItem)
     
-    editItem.addTarget(self, action: #selector(editCell(sender:)), for: .touchUpInside)
-    deleteItem.addTarget(self, action: #selector(deleteCell(sender:)), for: .touchUpInside)
+    editItem.addTarget(self, action: #selector(editCell(_:)), for: .touchUpInside)
+    deleteItem.addTarget(self, action: #selector(deleteCell(_:)), for: .touchUpInside)
     
     // MARK: - Constraints
     
@@ -70,13 +70,13 @@ class CustomToDoListCell: UITableViewCell {
   }
   // MARK: - Button Actions in Cell
 
-  @objc func deleteCell(sender: UIButton!) {
-    delegate?.deleteCell(cell: self)
+  @objc func deleteCell(_ sender: UIButton) {
+    delegate?.deleteCellFunc(cell: self)
     print("Delete button pressed")
   }
   
-  @objc func editCell(sender: UIButton!) {
-    delegate?.editCell(cell: self)
+  @objc func editCell(_ sender: UIButton) {
+    delegate?.editCellFunc(cell: self)
     print("Edit button pressed")
   }
   

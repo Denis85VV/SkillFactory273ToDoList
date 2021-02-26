@@ -7,9 +7,10 @@
 
 import UIKit
 
-class ToDoListTableViewController: UITableViewController {
+class ToDoListTableViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
   
-  let model = Model()
+  let model = ToDoListModel()
+  let tableView = UITableView()
   
   let plusButton = UIBarButtonItem(image: plusImage, style: .plain, target: self, action: nil)
   let editButton = UIBarButtonItem(image: editOff, style: .plain, target: self, action: nil)
@@ -29,6 +30,9 @@ class ToDoListTableViewController: UITableViewController {
     self.navigationItem.rightBarButtonItems = [plusButton, editButton, arrowButton]
     self.navigationItem.title = "Tasks"
     
+    tableView.delegate = self
+    tableView.dataSource = self
+    
     plusButton.target = self
     plusButton.action = #selector(addTaskButtonAction(_:))
     editButton.target = self
@@ -36,7 +40,12 @@ class ToDoListTableViewController: UITableViewController {
     arrowButton.target = self
     arrowButton.action = #selector(sortingTasksButtonAction(_:))
     
+    view.addSubview(tableView)
     tableView.translatesAutoresizingMaskIntoConstraints = false
+    tableView.topAnchor.constraint(equalTo:view.topAnchor).isActive = true
+    tableView.leftAnchor.constraint(equalTo:view.leftAnchor).isActive = true
+    tableView.rightAnchor.constraint(equalTo:view.rightAnchor).isActive = true
+    tableView.bottomAnchor.constraint(equalTo:view.bottomAnchor).isActive = true
     tableView.separatorColor = .gray
     
     tableView.register(CustomToDoListCell.self, forCellReuseIdentifier: "contactCell")
@@ -45,17 +54,17 @@ class ToDoListTableViewController: UITableViewController {
   
   // MARK: - Table View Data Source
   
-  override func numberOfSections(in tableView: UITableView) -> Int {
+  func numberOfSections(in tableView: UITableView) -> Int {
     // #warning Incomplete implementation, return the number of sections
     return 1
   }
   
-  override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+  func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
     // #warning Incomplete implementation, return the number of rows
     return model.toDoItems.count
   }
   
-  override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+  func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
     let cell = tableView.dequeueReusableCell(withIdentifier: "contactCell", for: indexPath) as! CustomToDoListCell
     // Configure the cell...
     cell.itemLabel.text = model.toDoItems[indexPath.row].string
@@ -65,7 +74,7 @@ class ToDoListTableViewController: UITableViewController {
     return cell
   }
   
-  override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+  func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
     tableView.deselectRow(at: indexPath, animated: true)
     if model.changeState(at: indexPath.row) == true {
       tableView.cellForRow(at: indexPath)?.accessoryType = .checkmark
@@ -77,13 +86,13 @@ class ToDoListTableViewController: UITableViewController {
   }
   
   // Override to support conditional editing of the table view.
-  override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+  func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
     // Return false if you do not want the specified item to be editable.
     return true
   }
   
   // Override to support editing the table view.
-  override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+  func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
     if editingStyle == UITableViewCell.EditingStyle.delete {
       // Delete the row from the data source
       model.toDoItems.remove(at: indexPath.row)
@@ -94,18 +103,18 @@ class ToDoListTableViewController: UITableViewController {
   }
   
   // Override to support rearranging the table view.
-  override func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
+  func tableView(_ tableView: UITableView, moveRowAt fromIndexPath: IndexPath, to: IndexPath) {
     model.moveItem(fromIndex: fromIndexPath.row, toIndex: to.row)
     tableView.reloadData()
   }
   
-  override func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-      let editAction = UIContextualAction(style: .normal, title: "Edit") { [weak self] (action, view, completionHandler) in
-          self?.editCellContent(indexPath: indexPath)
-                                          completionHandler(true)
-      }
-      editAction.backgroundColor = .systemBlue
-      return UISwipeActionsConfiguration(actions: [editAction])
+  func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+    let editAction = UIContextualAction(style: .normal, title: "Edit") { [weak self] (action, view, completionHandler) in
+      self?.editCellContent(indexPath: indexPath)
+      completionHandler(true)
+    }
+    editAction.backgroundColor = .systemBlue
+    return UISwipeActionsConfiguration(actions: [editAction])
   }
   
   func editCellContent(indexPath: IndexPath) {
@@ -184,7 +193,7 @@ class ToDoListTableViewController: UITableViewController {
 
 extension ToDoListTableViewController: CustomToDoListCellDelegate {
   
-  func editCell(cell: CustomToDoListCell) {
+  func editCellFunc(cell: CustomToDoListCell) {
     let indexPath = tableView.indexPath(for: cell)
     guard let unwrIndexPath = indexPath else {
       return
@@ -193,7 +202,7 @@ extension ToDoListTableViewController: CustomToDoListCellDelegate {
     print("Item edited")
   }
   
-  func deleteCell(cell: CustomToDoListCell) {
+  func deleteCellFunc(cell: CustomToDoListCell) {
     let indexPath = tableView.indexPath(for: cell)
     guard let unwrIndexPath = indexPath else {
       return
